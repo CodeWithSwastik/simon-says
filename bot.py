@@ -27,9 +27,14 @@ async def start(ctx, role: discord.Role, channel: Optional[discord.TextChannel])
     Start a Simon Says Game!
     """
     channel = channel or ctx.channel
-    
-    if not ctx.author.guild_permissions.administrator and not discord.utils.find(lambda r: r.name == "Simon Says Controller", ctx.author.roles):
-        return await ctx.respond("Only an admin or someone with the 'Simon Says Controller' role can start a game!", ephemeral=True)
+
+    if not ctx.author.guild_permissions.administrator and not discord.utils.find(
+        lambda r: r.name == "Simon Says Controller", ctx.author.roles
+    ):
+        return await ctx.respond(
+            "Only an admin or someone with the 'Simon Says Controller' role can start a game!",
+            ephemeral=True,
+        )
 
     if ctx.guild.id in bot.games:
         c = bot.games[ctx.guild.id].channel.mention
@@ -45,6 +50,7 @@ async def start(ctx, role: discord.Role, channel: Optional[discord.TextChannel])
     em.add_field(name="Player Count", value=str(game.player_count))
     await channel.send(embed=em, view=StartView(game=game))
 
+
 @bot.event
 async def on_message(msg):
     if msg.guild is None:
@@ -52,21 +58,22 @@ async def on_message(msg):
 
     if msg.guild.id not in bot.games:
         return
-    
+
     game = bot.games[msg.guild.id]
     if game.winner:
         del bot.games[msg.guild.id]
-    
+
     if game.started and msg.channel == game.channel:
         await game.handle_message(msg, bot)
-    
+
+
 @bot.command()
 @bot.user_command(name="Eliminate")
 async def eliminate(ctx, member: discord.Member):
     """
     Eliminate a member!
     """
-    
+
     if ctx.guild.id not in bot.games:
         return await ctx.respond(
             f"There is no active simon says game running in the server!", ephemeral=True
@@ -76,20 +83,19 @@ async def eliminate(ctx, member: discord.Member):
         return await ctx.respond(
             f"You aren't the simon and cannot eliminate someone!", ephemeral=True
         )
-    
+
     if member not in game.role.members:
-        return await ctx.respond(
-            f"That person isn't a competitor!", ephemeral=True
-        )
-    
+        return await ctx.respond(f"That person isn't a competitor!", ephemeral=True)
+
     await game.eliminate(member, ctx)
-    
+
+
 @bot.command()
 async def revive(ctx, member: discord.Member):
     """
     Revive a member!
     """
-    
+
     if ctx.guild.id not in bot.games:
         return await ctx.respond(
             f"There is no active simon says game running in the server!", ephemeral=True
@@ -99,49 +105,52 @@ async def revive(ctx, member: discord.Member):
         return await ctx.respond(
             f"You aren't the simon and cannot revive someone!", ephemeral=True
         )
-    
+
     if member in game.role.members:
         return await ctx.respond(
             f"That person is already a competitor!", ephemeral=True
         )
-    
+
     await member.add_roles(game.role)
     await ctx.respond(f"{member.mention} has been revived!")
-    
+
+
 @bot.command()
 async def remaining(ctx):
     """
     Check the remaining players!
-    """        
-    
+    """
+
     if ctx.guild.id not in bot.games:
         return await ctx.respond(
             f"There is no active simon says game running in the server!", ephemeral=True
         )
     game = bot.games[ctx.guild.id]
-    em = discord.Embed(title="Remaining Players", description=", ".join(m.mention for m in game.role.members), color=bot.accent_color)
+    em = discord.Embed(
+        title="Remaining Players",
+        description=", ".join(m.mention for m in game.role.members),
+        color=bot.accent_color,
+    )
     em.set_footer(text=f"{game.player_count} left")
     await ctx.respond(embed=em)
+
 
 @bot.command(name="new-simon")
 async def new_simon(ctx, member: discord.Member):
     """
     Chose a new simon!
     """
-    
+
     if ctx.guild.id not in bot.games:
         return await ctx.respond(
             f"There is no active simon says game running in the server!", ephemeral=True
         )
     game = bot.games[ctx.guild.id]
     if ctx.author != game.simon:
-        return await ctx.respond(
-            f"You aren't the simon!", ephemeral=True
-        )
-    
+        return await ctx.respond(f"You aren't the simon!", ephemeral=True)
 
     game.simon = member
-    await ctx.respond(f"{member.mention} is the new simon!")            
+    await ctx.respond(f"{member.mention} is the new simon!")
 
 
 load_dotenv()
