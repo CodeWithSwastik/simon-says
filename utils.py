@@ -58,6 +58,21 @@ class SimonSaysGame:
         )
         await self.check_winner()
 
+    async def mass_eliminate(self, members: list[discord.Member], reason=None):
+        if self.winner:
+            return
+        embed = discord.Embed(title="Eliminating people...", description=f"Eliminating {len(members)} contenstant{'s' if len(members)>1 else ''}.", color=ACCENT_COLOR)
+        if reason:
+            embed.add_field(name="Reason", value=reason)
+        ping = ", ".join(m.mention for m in members) or "** **"
+        for m in members:
+            await m.remove_roles(self.role)
+
+        await self.channel.send(
+            ping, embed=embed
+        )
+        await self.check_winner()
+
     async def handle_message(self, msg: discord.Message, bot: discord.Bot):
         msg.content = msg.content.lower()
         if msg.author == self.simon:
@@ -69,41 +84,30 @@ class SimonSaysGame:
                     case ["talk", *_] | ["afk", "check", *_]:
                         self._talked = set()
                         await asyncio.sleep(12)
-                        for i in self.role.members:
-                            if i not in self._talked:
-                                await self.eliminate(i, reason="AFK | Didn't talk")
+                        await self.mass_eliminate([m for m in self.role.members if m not in self._talked], reason="AFK | Didn't talk")
                     case ["shut"] | ["don't", "talk"]:
                         self._elim_all = True
                         await asyncio.sleep(12)
                         self._elim_all = False
                     case ["change", "your", "status", "to", status, *_]:
                         await asyncio.sleep(12)
-                        for i in self.role.members:
-                            if str(i.status) != status.lower():
-                                await self.eliminate(
-                                    i, reason="Didn't change their status"
-                                )
-                    case ["change", "your", "nickname" | "name", "to", nick, *_]:
+                        await self.mass_eliminate([m for m in self.role.members if str(m.status) != status.lower()], reason="Didn't change their status")
+
+                    case ["change", "your", "nickname" | "name" | "nick", "to", *nick]:
+                        nick = " ".join(nick)
                         await asyncio.sleep(16)
-                        for i in self.role.members:
-                            if str(i.display_name) != nick:
-                                await self.eliminate(
-                                    i, reason="Didn't change their name"
-                                )
+                        await self.mass_eliminate([m for m in self.role.members if str(m.display_name).lower() != nick], reason="Didn't change their name")
+
                     case ["say", *words]:
                         self._to_say = " ".join(words)
                         self._talked = set()
                         await asyncio.sleep(12)
-                        for i in self.role.members:
-                            if i not in self._talked:
-                                await self.eliminate(i, reason="AFK | Didn't talk")
+                        await self.mass_eliminate([m for m in self.role.members if m not in self._talked], reason="AFK | Didn't talk")
                         self._to_say = None
                     case ["what", "is", *_] | ["what's", *_]:
                         self._talked = set()
-                        await asyncio.sleep(20)
-                        for i in self.role.members:
-                            if i not in self._talked:
-                                await self.eliminate(i, reason="AFK | Didn't answer")
+                        await asyncio.sleep(16)
+                        await self.mass_eliminate([m for m in self.role.members if m not in self._talked], reason="AFK | Didn't answer")
 
                 if "below" in msg.content:
                     try:
@@ -135,21 +139,14 @@ class SimonSaysGame:
                     case ["shut"] | ["don't", "talk"]:
                         self._talked = set()
                         await asyncio.sleep(12)
-                        for i in self.role.members:
-                            if i not in self._talked:
-                                await self.eliminate(i, reason="AFK | Didn't talk")
+                        await self.mass_eliminate([m for m in self.role.members if m not in self._talked], reason="AFK | Didn't talk")
 
                     case ["change", "your", "status", "to", status, *_]:
                         await asyncio.sleep(12)
-                        for i in self.role.members:
-                            print(status, str(i.status))
-                            if str(i.status) == status.lower():
-                                await self.eliminate(i, reason="Changed their status")
+                        await self.mass_eliminate([m for m in self.role.members if str(m.status) == status.lower()], reason="Changed their status")
                     case ["change", "your", "nickname" | "name", "to", nick, *_]:
                         await asyncio.sleep(12)
-                        for i in self.role.members:
-                            if str(i.display_name) == nick:
-                                await self.eliminate(i, reason="Changed their name")
+                        await self.mass_eliminate([m for m in self.role.members if str(m.display_name).lower() == nick], reason="Changed their nickname")
                     case ["say", *words]:
                         self._to_not_say = " ".join(words)
                         await asyncio.sleep(12)
@@ -182,12 +179,19 @@ class SimonSaysGame:
                 await self.eliminate(msg.author)
 
     async def check_winner(self):
+        if self.winner:
+            return
         if self.player_count == 1:
             self.winner = self.role.members[0]
             await self.channel.send(
                 f"We have a winner! {self.winner.mention} has won the game! GG! Thanks for playing!"
             )
             await self.winner.remove_roles(self.role)
+        elif self.player_count == 0:
+            self.winner = True
+            await self.channel.send(
+                f"Everyone lost, no winner!"
+            )           
 
 
 class StartView(discord.ui.View):

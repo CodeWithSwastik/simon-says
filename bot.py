@@ -50,7 +50,7 @@ async def start(ctx, role: discord.Role, channel: Optional[discord.TextChannel])
 
     await ctx.respond(f"Starting a game in {channel.mention}!", ephemeral=True)
 
-    em = discord.Embed(title="Simon says game!", description=f"In this game you must follow the orders given by the simon {game.simon.mention}", color=bot.accent_color)
+    em = discord.Embed(title="Simon says game!", description=f"Simon: {game.simon.mention}", color=bot.accent_color)
     em.set_thumbnail(url=bot.user.display_avatar.url)
     em.add_field(name="Player Count", value=str(game.player_count))
     await channel.send(embed=em, view=StartView(game=game))
