@@ -137,7 +137,7 @@ async def remaining(ctx):
 @bot.command(name="new-simon")
 async def new_simon(ctx, member: discord.Member):
     """
-    Chose a new simon!
+    Choose a new simon!
     """
 
     if ctx.guild.id not in bot.games:
