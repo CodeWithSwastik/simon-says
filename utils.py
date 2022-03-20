@@ -31,12 +31,15 @@ class SimonSaysGame:
         return len(self.role.members)
 
     @property
+    def players_string(self):
+        return ', '.join(m.mention for m in self.role.members)
+
+    @property
     def simon_says_line(self):
         return f"{self._simon_nick} says"
 
     async def start(self):
         self.started = True
-        self.participants = self.role.members
         em = discord.Embed(
             title="Simon Says Game is Starting!",
             description=f"In this game you must listen to the Simon ({self.simon.mention}) and follow his orders. If you fail to do so you'll be eliminated! The last person remaining wins!",
@@ -44,7 +47,7 @@ class SimonSaysGame:
         )
         await self.channel.send(embed=em)
         await self.channel.send(
-            f"Players ({self.player_count}): {','.join(m.mention for m in self.participants)}"
+            f"Players ({self.player_count}): {self.players_string}"
         )
 
     async def eliminate(self, member: discord.Member, ctx=None, reason=None):
@@ -65,23 +68,23 @@ class SimonSaysGame:
                         await msg.add_reaction("✅")
                     case ["talk", *_] | ["afk", "check", *_]:
                         self._talked = set()
-                        await asyncio.sleep(10)
+                        await asyncio.sleep(12)
                         for i in self.role.members:
                             if i not in self._talked:
                                 await self.eliminate(i, reason="AFK | Didn't talk")
                     case ["shut"] | ["don't", "talk"]:
                         self._elim_all = True
-                        await asyncio.sleep(10)
+                        await asyncio.sleep(12)
                         self._elim_all = False
                     case ["change", "your", "status", "to", status, *_]:
-                        await asyncio.sleep(10)
+                        await asyncio.sleep(12)
                         for i in self.role.members:
                             if str(i.status) != status.lower():
                                 await self.eliminate(
                                     i, reason="Didn't change their status"
                                 )
                     case ["change", "your", "nickname" | "name", "to", nick, *_]:
-                        await asyncio.sleep(10)
+                        await asyncio.sleep(16)
                         for i in self.role.members:
                             if str(i.display_name) != nick:
                                 await self.eliminate(
@@ -90,14 +93,14 @@ class SimonSaysGame:
                     case ["say", *words]:
                         self._to_say = " ".join(words)
                         self._talked = set()
-                        await asyncio.sleep(10)
+                        await asyncio.sleep(12)
                         for i in self.role.members:
                             if i not in self._talked:
                                 await self.eliminate(i, reason="AFK | Didn't talk")
                         self._to_say = None
                     case ["what", "is", *_] | ["what's", *_]:
                         self._talked = set()
-                        await asyncio.sleep(15)
+                        await asyncio.sleep(20)
                         for i in self.role.members:
                             if i not in self._talked:
                                 await self.eliminate(i, reason="AFK | Didn't answer")
@@ -124,30 +127,30 @@ class SimonSaysGame:
                 match words:
                     case ["talk", *_] | ["afk", "check", *_]:
                         self._elim_all = True
-                        await asyncio.sleep(10)
+                        await asyncio.sleep(12)
                         self._elim_all = False
 
                     case ["shut"] | ["don't", "talk"]:
                         self._talked = set()
-                        await asyncio.sleep(10)
+                        await asyncio.sleep(12)
                         for i in self.role.members:
                             if i not in self._talked:
                                 await self.eliminate(i, reason="AFK | Didn't talk")
 
                     case ["change", "your", "status", "to", status, *_]:
-                        await asyncio.sleep(10)
+                        await asyncio.sleep(12)
                         for i in self.role.members:
                             print(status, str(i.status))
                             if str(i.status) == status.lower():
                                 await self.eliminate(i, reason="Changed their status")
                     case ["change", "your", "nickname" | "name", "to", nick, *_]:
-                        await asyncio.sleep(10)
+                        await asyncio.sleep(12)
                         for i in self.role.members:
                             if str(i.display_name) == nick:
                                 await self.eliminate(i, reason="Changed their name")
                     case ["say", *words]:
                         self._to_not_say = " ".join(words)
-                        await asyncio.sleep(10)
+                        await asyncio.sleep(12)
                         self._to_not_say = None
 
                 if "below" in msg.content:
@@ -196,6 +199,7 @@ class StartView(discord.ui.View):
         em = interaction.message.embeds[0]
         em.clear_fields()
         em.add_field(name="Player Count", value=str(self.game.player_count))
+        em.add_field(name="Players", value=self.game.players_string)
         await interaction.message.edit(embed=em)
 
     @discord.ui.button(label="Start game!", style=discord.ButtonStyle.green, emoji="✨")

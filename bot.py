@@ -20,7 +20,6 @@ bot = discord.Bot(
 bot.games = {}
 bot.accent_color = ACCENT_COLOR
 
-
 @bot.command()
 async def start(ctx, role: discord.Role, channel: Optional[discord.TextChannel]):
     """
@@ -128,7 +127,7 @@ async def remaining(ctx):
     game = bot.games[ctx.guild.id]
     em = discord.Embed(
         title="Remaining Players",
-        description=", ".join(m.mention for m in game.role.members),
+        description=game.players_string,
         color=bot.accent_color,
     )
     em.set_footer(text=f"{game.player_count} left")
