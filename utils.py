@@ -106,12 +106,14 @@ class SimonSaysGame:
                                 await self.eliminate(i, reason="AFK | Didn't answer")
 
                 if "below" in msg.content:
-                    m = await bot.wait_for(
-                        "message",
-                        check=lambda ms: ms.channel == self.channel,
-                        timeout=15,
-                    )
-
+                    try:
+                        m = await bot.wait_for(
+                            "message",
+                            check=lambda ms: ms.channel == self.channel,
+                            timeout=15,
+                        )
+                    except asyncio.TimeoutError:
+                        pass
                     if "lose" in msg.content:
                         await self.eliminate(m.author)
                     else:
@@ -154,11 +156,14 @@ class SimonSaysGame:
                         self._to_not_say = None
 
                 if "below" in msg.content:
-                    m = await bot.wait_for(
-                        "message",
-                        check=lambda ms: ms.channel == self.channel,
-                        timeout=15,
-                    )
+                    try:
+                        m = await bot.wait_for(
+                            "message",
+                            check=lambda ms: ms.channel == self.channel,
+                            timeout=15,
+                        )
+                    except asyncio.TimeoutError:
+                        pass
 
                     if "win" in msg.content:
                         await self.eliminate(m.author)
