@@ -21,7 +21,7 @@ bot.games = {}
 bot.accent_color = ACCENT_COLOR
 
 @bot.command()
-async def start(ctx, role: discord.Role, channel: Optional[discord.TextChannel]):
+async def start(ctx, channel: Optional[discord.TextChannel]):
     """
     Start a Simon Says Game!
     """
@@ -35,14 +35,15 @@ async def start(ctx, role: discord.Role, channel: Optional[discord.TextChannel])
             ephemeral=True,
         )
 
-    if role.name != "Contestant":
+    role = discord.utils.find(lambda r: r.name == "Contestant", ctx.guild.roles)
+    if role is None:
         return await ctx.respond(
-            "You may only use a role named Contestant for this.",
+            "There must be a role called Contestant in this server in order to play this.",
             ephemeral=True,
         )
     if ctx.guild.id in bot.games:
         c = bot.games[ctx.guild.id].channel.mention
-        await ctx.respond(
+        return await ctx.respond(
             f"A simon says game is already running in {c}!", ephemeral=True
         )
 
@@ -74,9 +75,9 @@ async def on_message(msg):
 
 @bot.command()
 @bot.user_command(name="Eliminate")
-async def eliminate(ctx, member: discord.Member):
+async def eliminate(ctx, user: discord.Member):
     """
-    Eliminate a member!
+    Eliminate a user!
     """
 
     if ctx.guild.id not in bot.games:
@@ -89,17 +90,17 @@ async def eliminate(ctx, member: discord.Member):
             f"You aren't the simon and cannot eliminate someone!", ephemeral=True
         )
 
-    if member not in game.role.members:
+    if user not in game.role.members:
         return await ctx.respond(f"That person isn't a competitor!", ephemeral=True)
 
-    await game.eliminate(member, ctx)
+    await game.eliminate(user, ctx)
 
 
 @bot.command()
 @bot.user_command(name="Revive")
-async def revive(ctx, member: discord.Member):
+async def revive(ctx, user: discord.Member):
     """
-    Revive a member!
+    Revive a user!
     """
 
     if ctx.guild.id not in bot.games:
@@ -112,13 +113,13 @@ async def revive(ctx, member: discord.Member):
             f"You aren't the simon and cannot revive someone!", ephemeral=True
         )
 
-    if member in game.role.members:
+    if user in game.role.members:
         return await ctx.respond(
             f"That person is already a competitor!", ephemeral=True
         )
 
-    await member.add_roles(game.role)
-    await ctx.respond(f"{member.mention} has been revived!")
+    await user.add_roles(game.role)
+    await ctx.respond(f"{user.mention} has been revived!")
 
 
 @bot.command()
@@ -142,7 +143,7 @@ async def remaining(ctx):
 
 
 @bot.command(name="new-simon")
-async def new_simon(ctx, member: discord.Member):
+async def new_simon(ctx, user: discord.Member):
     """
     Choose a new simon!
     """
@@ -155,8 +156,8 @@ async def new_simon(ctx, member: discord.Member):
     if ctx.author != game.simon:
         return await ctx.respond(f"You aren't the simon!", ephemeral=True)
 
-    game.simon = member
-    await ctx.respond(f"{member.mention} is the new simon!")
+    game.simon = user
+    await ctx.respond(f"{user.mention} is the new simon!")
 
 
 load_dotenv()

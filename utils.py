@@ -61,7 +61,7 @@ class SimonSaysGame:
     async def mass_eliminate(self, members: list[discord.Member], reason=None):
         if self.winner:
             return
-        embed = discord.Embed(title="Eliminating people...", description=f"Eliminating {len(members)} contenstant{'s' if len(members)>1 else ''}.", color=ACCENT_COLOR)
+        embed = discord.Embed(title="Eliminating people...", description=f"Eliminating {len(members)} contenstant{'' if len(members)==1 else 's'}.", color=ACCENT_COLOR)
         if reason:
             embed.add_field(name="Reason", value=reason)
         ping = ", ".join(m.mention for m in members) or "** **"
