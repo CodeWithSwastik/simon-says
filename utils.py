@@ -51,6 +51,8 @@ class SimonSaysGame:
         )
 
     async def eliminate(self, member: discord.Member, ctx=None, reason=None):
+        if self.role not in member.roles:
+            return
         await member.remove_roles(self.role)
         send = ctx.respond if ctx else self.channel.send
         await send(
@@ -201,6 +203,15 @@ class StartView(discord.ui.View):
 
     @discord.ui.button(label="Join", style=discord.ButtonStyle.blurple, emoji="🙋‍♂️")
     async def join_callback(self, button, interaction: discord.Interaction):
+        if interaction.user == self.game.simon:
+            return await interaction.response.send_message(
+                "You are the simon! You cannot join the game.", ephemeral=True
+            )
+        elif self.game.role in interaction.user.roles:
+            return await interaction.response.send_message(
+                "You are already a participant!", ephemeral=True
+            )
+        
         await interaction.user.add_roles(self.game.role)
         await interaction.response.send_message(
             "You are now a participant!", ephemeral=True
